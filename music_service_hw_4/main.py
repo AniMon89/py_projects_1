@@ -309,16 +309,15 @@ def add_conn_track_collection(conn, track_id, collection_id):
 
 with psycopg2.connect(database='DB_homework_2', user='postgres', password='HK87jgdddkl579') as conn:
 
-
     list_music = [
         ['Imagine Dragons',
             ['поп-рок', 'альтернативный рок', 'инди-поп', 'электропоп', 'инди-рок', 'синти-поп'],
             [['Evolve', 2017,
-                ['Believer', 3.38, ['She Playing Hella Hard', 2021], ['Hits Of All Time', 2021],['10`s Best Of', 2021]]
+                ['Believer', 3.38, ['She Playing Hella Hard', 2021], ['Hits Of All Time', 2021], ['10`s Best Of', 2021]]
             ],
              ['Night Visions', 2013,
-                 ['Demons', 2.95, ['Hits Of All Time', 2021]]
-             ]
+                ['Demons', 2.95, ['Hits Of All Time', 2021]]
+            ]
             ]
         ],
         ['Rixton',
@@ -402,7 +401,6 @@ with psycopg2.connect(database='DB_homework_2', user='postgres', password='HK87j
     print(drop_db(conn))
     print(create_db(conn))
 
-    index = 0
     for artis in list_music:
         art = add_artist(conn, artis[0])
         print(art)
