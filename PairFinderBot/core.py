@@ -78,7 +78,7 @@ class VkTools:
                                        'has_photo': True,
                                        'age_from': options['age_from'],
                                        'age_to': options['age_to'],
-                                       'status': 6 or 1
+                                       'status': 6
                                        }
                                       )['items']
         except ApiError as e:
