@@ -20,12 +20,12 @@ class BotInterface:
     def message_send(self, user_id, message, attachment=None):
         try:
             self.vk.method('messages.send',
-                {'user_id': user_id,
-                'message': message,
-                'attachment': attachment,
-                'random_id': get_random_id()
-                 }
-                )
+                           {'user_id': user_id,
+                            'message': message,
+                            'attachment': attachment,
+                            'random_id': get_random_id()
+                            }
+                           )
         except ApiError as e:
             print(f'error = {e}')
             return None
@@ -49,18 +49,25 @@ class BotInterface:
             if self.get_message().lower() == 'привет':
                 self.params = self.vk_tools.get_profile_info(event.user_id)
                 if self.params["name"] is not None:
-                    self.message_send(event.user_id, f'Привет, {self.params["name"]}.')
+                    self.message_send(event.user_id, f'Привет, {self.params["name"]}. '
+                                                     f'Доступны команды:\nзадать поиск - Поиск,\n'
+                                                     f'получить список понравившихся анкет - Лайки.')
                 else:
-                    self.message_send(event.user_id, 'Привет, друг.')
+                    self.message_send(event.user_id, f'Привет, друг. '
+                                                     f'Доступны команды:\nзадать поиск - Поиск,\n'
+                                                     f'получить список понравившихся анкет - Лайки.')
 
             elif self.get_message().lower() == 'поиск':
                 self.message_send(event.user_id, 'Поиск начат.')
                 self.params = self.vk_tools.get_profile_info(event.user_id) if self.params is None else self.params
                 search_option = self.vk_tools.check_user_info(self.params, event.user_id)
                 users = self.vk_tools.search_users(search_option, self.offset)
-                self.offset += 10
+                if not users:
+                    self.message_send(event.user_id, f'Извините, команда Поиск пока не работает.'
+                                                     f'Но вы можете посмотреть понравившиеся, отправив Лайки. ')
+                self.offset += 50
                 p_f_bot_db = BotDB()
-                profile_id_db = p_f_bot_db.add_profile(self.params['name'], event.user_id)
+                profile_id_db = p_f_bot_db.add_profile(event.user_id)
                 while len(users) != 0:
                     user = users.pop()
                     photos_user = self.vk_tools.get_photos(user['id'])
@@ -73,21 +80,22 @@ class BotInterface:
                         for photo in photos_user[:3]:
                             attachment += f'photo{photo["owner_id"]}_{photo["id"]},'
                         self.message_send(event.user_id,
-                                        f'Имя {user["name"]}, ссылка: https://vk.com/id{user["id"]} . '
-                                        f'Вам понравился этот человек? Напишите "да" или "нет".',
-                                        attachment=attachment
-                                        )
+                                          f'Имя {user["name"]}, ссылка: https://vk.com/id{user["id"]} . '
+                                          f'Вам понравился этот человек? Напишите "да" или "нет".',
+                                          attachment=attachment
+                                          )
                         ans = self.get_message()
                         if ans == 'да':
                             p_f_bot_db.add_liked(profile_id_db, worksheet_id_db)
                 p_f_bot_db.close()
-            elif self.get_message().lower() == 'понравившиеся':
+            elif self.get_message().lower() == 'лайки':
                 p_f_bot_db_liked = BotDB()
                 tuple_liked = p_f_bot_db_liked.get_liked(event.user_id)
+                p_f_bot_db_liked.close()
                 if tuple_liked:
                     response_text = ''
-                    for (liked_user,) in tuple_liked:
-                        response_text += f'Имя {(liked_user,)[0]}, ссылка: https://vk.com/id{(liked_user,)[1]} ,'
+                    for liked_user in tuple_liked:
+                        response_text += f'Имя: {liked_user[0]}, ссылка: https://vk.com/id{liked_user[1]} ,\n'
                     self.message_send(event.user_id, response_text)
                 else:
                     self.message_send(event.user_id, 'У Вас нет понравившихся анкет.')

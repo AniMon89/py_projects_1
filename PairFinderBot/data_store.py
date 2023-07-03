@@ -1,7 +1,7 @@
 import psycopg2
 
 
-class BotDB():
+class BotDB:
     def __init__(self):
         with open('password_postgres.txt', 'r') as file_object:
             password_postgres = file_object.read().strip()
@@ -38,7 +38,6 @@ class BotDB():
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS Profiles (
                     id SERIAL PRIMARY KEY,
-                    name VARCHAR (40) NOT NULL,
                     user_id INTEGER NOT NULL UNIQUE 
                 );
             """)
@@ -70,27 +69,27 @@ class BotDB():
             self.conn.commit()
         return 'Функция create_db выполнена.'
 
-    def add_profile(self, name, user_id):
+    def add_profile(self, user_id):
         with self.conn.cursor() as cur:
             cur.execute("""
                        SELECT id
                        FROM Profiles
-                       WHERE name = %s and user_id = %s
+                       WHERE  user_id = %s
                        """,
-                        (name, user_id)
+                        (user_id,)
                         )
             id_profile = cur.fetchone()
             if not id_profile:
                 cur.execute("""
-                           INSERT INTO Profiles (name, user_id) 
-                           VALUES (%s, %s) 
+                           INSERT INTO Profiles (user_id) 
+                           VALUES (%s) 
                            RETURNING id;
                            """,
-                            (name, user_id)
+                            (user_id,)
                             )
-                id = cur.fetchone()[0]
+                identifier = cur.fetchone()[0]
                 self.conn.commit()
-                return id
+                return identifier
 
             else:
                 # self.close()
@@ -103,23 +102,23 @@ class BotDB():
                        FROM Worksheets
                        WHERE name = %s and user_id = %s
                        """,
-                        (name, user_id)
+                        (name, user_id,)
                         )
-            id_profile = cur.fetchone()
-            if not id_profile:
+            id_worksheet = cur.fetchone()
+            if not id_worksheet:
                 cur.execute("""
                            INSERT INTO Worksheets (name, user_id) 
                            VALUES (%s, %s) 
                            RETURNING id;
                            """,
-                            (name, user_id)
+                            (name, user_id,)
                             )
-                id = cur.fetchone()[0]
+                identifier = cur.fetchone()[0]
                 self.conn.commit()
-                return id
+                return identifier
 
             else:
-                return id_profile[0]
+                return id_worksheet[0]
 
     def add_viewed(self, profile_id, worksheet_id):
         with self.conn.cursor() as cur:
@@ -204,9 +203,9 @@ class BotDB():
                         """,
                         (user_id,)
                         )
-            list_liked_worksheets = cur.fetchall()
-            if list_liked_worksheets:
-                if (worksheet_id,) in list_liked_worksheets:
+            list_viewed_worksheets = cur.fetchall()
+            if list_viewed_worksheets:
+                if (worksheet_id,) in list_viewed_worksheets:
                     return True
                 else:
                     return False
@@ -219,4 +218,3 @@ if __name__ == '__main__':
     print(pair_finder_bot_db.drop_db())
     print(pair_finder_bot_db.create_db())
     pair_finder_bot_db.close()
-
