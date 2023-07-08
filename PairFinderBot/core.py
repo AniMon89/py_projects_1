@@ -71,7 +71,7 @@ class VkTools:
 
         try:
             users = self.vkapi.method('users.search',
-                                      {'count': 50,
+                                      {'count': 10,
                                        'offset': offset,
                                        'hometown': options['city'],
                                        'sex': options['sex'],
