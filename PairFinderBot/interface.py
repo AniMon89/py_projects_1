@@ -62,12 +62,32 @@ class BotInterface:
                 elif command == 'поиск':
                     self.message_send(event.user_id, 'Поиск начат.')
                     self.params = self.vk_tools.get_profile_info(event.user_id) if self.params is None else self.params
-                    search_option = self.vk_tools.check_user_info(self.params, event.user_id)
+
+                    if self.params['sex'] is None:
+                        self.message_send(event.user_id, 'Напишите какой у Вас пол: женский или жужской.')
+                        ans_sex = self.get_message()
+                        sex = 2 if ans_sex.lower() == 'жужской' else 1
+                    else:
+                        sex = self.params['sex']
+
+                    if self.params['city'] is None:
+                        self.message_send(event.user_id, 'Какой у Вас город проживания (полное название)?')
+                        city = self.get_message().lower()
+                    else:
+                        city = self.params['city']
+
+                    if self.params['bdate'] is None:
+                        self.message_send(event.user_id, 'Какой у Вас год рождения?')
+                        bdate = int(self.get_message())
+                    else:
+                        bdate = self.params['bdate']
+
+                    search_option = {'sex': sex, 'city': city, 'bdate': bdate}
                     users = self.vk_tools.search_users(search_option, self.offset)
                     if not users:
                         self.message_send(event.user_id, f'Извините, команда Поиск пока не работает.'
                                                          f'Но вы можете посмотреть понравившиеся, отправив Лайки. ')
-                    self.offset += 10
+                    self.offset += 50
                     p_f_bot_db = BotDB()
                     profile_id_db = p_f_bot_db.add_profile(event.user_id)
                     while len(users) != 0:
@@ -103,6 +123,7 @@ class BotInterface:
 
                 elif command == 'пока':
                     self.message_send(event.user_id, 'До новых встеч.')
+
                 else:
                     if command == 'да' or 'нет':
                         pass

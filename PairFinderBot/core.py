@@ -1,6 +1,5 @@
 import vk_api
 
-from config import community_token
 from config import access_token
 from vk_api.exceptions import ApiError
 from datetime import datetime
@@ -33,51 +32,29 @@ class VkTools:
 
         return result
 
-    def check_user_info(self, options, user_id):
-
-        from interface import BotInterface
-
-        check_info = BotInterface(community_token)
-
-        if options['sex'] is not None:
-            sex = 1 if options['sex'] == 2 else 2
-        else:
-            check_info.message_send(user_id, 'Напишите какой у Вас пол: женский или жужской.')
-            ans_sex = check_info.get_message()
-            sex = 1 if ans_sex.lower() == 'жужской' else 2
-
-        if options['city'] is not None:
-            city = options['city']
-        else:
-            check_info.message_send(user_id, 'Какой у Вас город проживания (полное название)?')
-            city = check_info.get_message().lower()
-
-        current_year = datetime.now().year
-
+    def search_users(self, options, offset):
+        sex = 1 if options['sex'] == 2 else 2
+        city = options['city']
+        curent_year = datetime.now().year
         try:
             user_year = int(options['bdate'].split('.')[2])
         except AttributeError as e:
             print(f'error = {e}')
-            check_info.message_send(user_id, 'Сколько Вам полных лет?')
-            user_year = int(check_info.get_message())
-
-        age = current_year - user_year
+            user_year = options['bdate']
+            if user_year is None:
+                user_year = 0
+        age = curent_year - user_year
         age_from = age - 5
         age_to = age + 5
-        search_options = {'sex': sex, 'city': city, 'age_from': age_from, 'age_to': age_to}
-        return search_options
-
-    def search_users(self, options, offset):
-
         try:
             users = self.vkapi.method('users.search',
-                                      {'count': 10,
+                                      {'count': 50,
                                        'offset': offset,
-                                       'hometown': options['city'],
-                                       'sex': options['sex'],
+                                       'hometown': city,
+                                       'sex': sex,
                                        'has_photo': True,
-                                       'age_from': options['age_from'],
-                                       'age_to': options['age_to'],
+                                       'age_from': age_from,
+                                       'age_to': age_to,
                                        'status': 6
                                        }
                                       )['items']
@@ -128,7 +105,9 @@ if __name__ == '__main__':
     shift = 0
     tools = VkTools(access_token)
     params = tools.get_profile_info(profile_id)
-    search_data = tools.check_user_info(params, profile_id)
-    worksheets = tools.search_users(search_data, shift)
+    worksheets = tools.search_users(params, shift)
     worksheet = worksheets.pop()
     photos_user = tools.get_photos(worksheet['id'])
+    print(params)
+    print(worksheets)
+    print(worksheet)
